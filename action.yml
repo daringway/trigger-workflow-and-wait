@@ -20,6 +20,9 @@ inputs:
   event_type:
     description: "The event type that is trigger your workflow on the secondary repository."
     required: false
+  client_payload:
+    description: "The client payload sent with the event_type."
+    required: false
   ref:
     description: "The reference point. This is either a commit or branch."
     required: false

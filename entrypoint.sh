@@ -45,6 +45,12 @@ function validate_args {
   then
     event_type=$INPUT_EVENT_TYPE
   fi
+  
+  client_payload="{}"
+  if [ "$INPUT_CLIENT_PAYLOAD" ]
+  then
+    client_payload=$INPUT_CLIENT_PAYLOAD
+  fi
 
   ref="master"
   if [ $INPUT_REF ]
@@ -59,7 +65,7 @@ function trigger_workflow {
     -H "Accept: application/vnd.github.everest-preview+json" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" \
-    --data "{\"event_type\": \"${event_type}\", \"client_payload\": {} }"
+    --data "{\"event_type\": \"${event_type}\", \"client_payload\": ${client_payload} }"
   sleep $wait_interval
 }
 

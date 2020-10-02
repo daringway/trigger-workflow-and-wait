@@ -17,6 +17,7 @@ When deploying an app you may need to deploy additional services, this Github Ac
 | `wait_interval` | False      | 10          | The number of seconds delay between checking for result of run. |
 | `event_type`    | False      | `ping`      | The event type that is trigger your workflow on the secondary repository. |
 | `ref`         | False      | `master`    | The reference point. This is either a commit or branch. |
+| `client_payload` | False | {} | The client payload sent with the event_type. |
 
 
 ## Example
