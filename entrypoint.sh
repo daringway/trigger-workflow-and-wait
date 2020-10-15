@@ -61,7 +61,7 @@ function validate_args {
 
 function trigger_workflow {
   echo "https://api.github.com/repos/${INPUT_OWNER}/${INPUT_REPO}/dispatches"
-  curl -X POST "https://api.github.com/repos/${INPUT_OWNER}/${INPUT_REPO}/dispatches" \
+  curl --silent -X POST "https://api.github.com/repos/${INPUT_OWNER}/${INPUT_REPO}/dispatches" \
     -H "Accept: application/vnd.github.everest-preview+json" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" \
@@ -71,19 +71,30 @@ function trigger_workflow {
 
 function wait_for_workflow_to_finish {
   # Find the id of the last build
-  last_run_id=$(curl -X GET "https://api.github.com/repos/$INPUT_OWNER/$INPUT_REPO/commits/$ref/check-runs" \
+  last_run_id=$(curl --silent -X GET "https://api.github.com/repos/$INPUT_OWNER/$INPUT_REPO/commits/$ref/check-runs" \
     -H 'Accept: application/vnd.github.antiope-preview+json' \
     -H "Authorization: Bearer $INPUT_GITHUB_TOKEN" | jq '[.check_runs[].id] | first')
   echo "The job id is [$last_run_id]."
+
+  last_run_html=$(curl --silent -X GET "https://api.github.com/repos/$INPUT_OWNER/$INPUT_REPO/commits/$ref/check-runs" \
+    -H 'Accept: application/vnd.github.antiope-preview+json' \
+    -H "Authorization: Bearer $INPUT_GITHUB_TOKEN" | jq '[.check_runs[].html_url] | first')
+
+  echo "The dispatched action $last_run_html"
+
   echo ""
-  conclusion=$(curl -X GET "https://api.github.com/repos/$INPUT_OWNER/$INPUT_REPO/check-runs/$last_run_id" -H 'Accept: application/vnd.github.antiope-preview+json' -H "Authorization: Bearer $INPUT_GITHUB_TOKEN" | jq '.conclusion')
+  conclusion=$(curl --silent -X GET "https://api.github.com/repos/$INPUT_OWNER/$INPUT_REPO/check-runs/$last_run_id" -H 'Accept: application/vnd.github.antiope-preview+json' -H "Authorization: Bearer $INPUT_GITHUB_TOKEN" | jq '.conclusion')
 
   while [[ $conclusion == "null" ]]
   do
     sleep $wait_interval
-    conclusion=$(curl -X GET "https://api.github.com/repos/$INPUT_OWNER/$INPUT_REPO/check-runs/$last_run_id" -H 'Accept: application/vnd.github.antiope-preview+json' -H "Authorization: Bearer $INPUT_GITHUB_TOKEN" | jq '.conclusion')
+    conclusion=$(curl --silent -X GET "https://api.github.com/repos/$INPUT_OWNER/$INPUT_REPO/check-runs/$last_run_id" -H 'Accept: application/vnd.github.antiope-preview+json' -H "Authorization: Bearer $INPUT_GITHUB_TOKEN" | jq '.conclusion')
     echo "Checking conclusion [$conclusion]"
   done
+
+  echo "The dispatched action $last_run_html" > comment.txt
+  echo "Status: $conclusion" >> comment.txt
+  github_pr_comment comment.txt
 
   if [[ $conclusion == "\"success\"" ]]
   then
